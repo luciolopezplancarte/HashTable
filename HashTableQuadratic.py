@@ -78,10 +78,6 @@ class HashTable:
         #load factor = number of items in list/ number of available slots
         #simpler implementation: (h(key) + i^2)%(tablesize)
 
-        #UPDATE
-        #update = False
-        #if self.get(key):
-        #    update = True
 
         load_factor = self._size /(self._buckets)
         if load_factor > self._load_factor_threshold:
@@ -91,6 +87,7 @@ class HashTable:
         index = self.hash_function(key)
         if self.get(key):
             #UPDATE
+            #https://stackoverflow.com/questions/11458239/how-to-change-values-in-a-tuple
             temp= list(self.array[index])
             temp[0] = key
             temp[1] = value
@@ -100,20 +97,20 @@ class HashTable:
 
         i = 0
         if self.array[index] is not None:
-            print("COLLISION")
-            print("PROBING")
+            #print("COLLISION")
+            #print("PROBING")
             new_index = index
             while True:
             #while self.array[new_index] is not None:
                 new_index = (index + (i*i))%self._buckets
-                print(f"Probing Index{new_index}")
+                #print(f"Probing Index{new_index}")
                 i +=1
                 if self.array[new_index] is None or self.array[new_index] == self._del_marker:
                     index = new_index
                     break
             
         self.array[index] = (key,value)
-        print(f"Inserting into index:{index}")
+        #print(f"Inserting into index:{index}")
         self._size +=1
         
 
@@ -136,7 +133,15 @@ class HashTable:
             return None
         
         index_toGet = self.hash_function(key)
-        return self.array[index_toGet][1]
+        index_toProbe  = index_toGet
+        for i in range(self._buckets):
+            if self.array[index_toProbe]:
+                if self.array[index_toProbe][0] == key:
+                    return self.array[index_toGet][1]
+                else:
+                    index_toProbe = (index_toGet + (i * i))% self._buckets
+        
+        return None
 
 
     def search(self, key):
@@ -197,12 +202,20 @@ class HashTable:
         In this activity, for simplicity we are NOT shrinking the table.
         """
         if not self.get(key):
-            print(f"{key} does not exist at index: {self.hash_function(key)}")
+            print(f"{key} does not exist")
             return
 
         index_toRemove = self.hash_function(key)
-        self.array[index_toRemove] = self._del_marker
-        self._size -= 1
+        index_toProbe  = index_toRemove
+        for i in range(self._buckets):
+            if self.array[index_toProbe]:
+                if self.array[index_toProbe][0] == key:
+                    self.array[index_toProbe] = self._del_marker
+                    self._size -= 1
+                    return
+                else:
+                    index_toProbe = (index_toRemove + (i * i))% self._buckets
+        
 
         
 
@@ -219,7 +232,7 @@ class HashTable:
         for i in range(len(self.array)):
             if self.array[i] is not None:
                 new_index = self.hash_function(self.array[i][0])
-                print(f"newIndex: {new_index}")
+                #print(f"newIndex: {new_index}")
                 new_array[new_index] = self.array[i]
         self.array = new_array
 

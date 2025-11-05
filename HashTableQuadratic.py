@@ -166,18 +166,6 @@ class HashTable:
         return None
                     
 
-        """if self.array[index_toSearch]:
-            if self.array[index_toSearch][0] == key:
-                return True
-            else:
-                #PROBE to make sure
-                for i in range(self._buckets):
-                    index_toSearch = (index_toSearch + (i * i))%self._buckets
-                    if self.array[index_toSearch][0] == key:
-                        return True
-                return None
-
-        """
         
 
     def remove(self, key):
@@ -227,14 +215,24 @@ class HashTable:
         """
         
         self._buckets= self._resize_multiplier * self._buckets
-        new_array = [None] * self._buckets
-        
-        for i in range(len(self.array)):
-            if self.array[i] is not None:
-                new_index = self.hash_function(self.array[i][0])
-                #print(f"newIndex: {new_index}")
-                new_array[new_index] = self.array[i]
-        self.array = new_array
+        #new_array = [None] * self._buckets
+        temp_array = self.array
+        self.array = [None] * self._buckets
+
+        for i in range(len(temp_array)):
+            j = 0
+            if temp_array[i]:
+                #self.put(temp_array[i][0], temp_array[i][1])
+                index = self.hash_function(temp_array[i][0])
+                new_index = index
+                while True:
+                    new_index = (index + (j*j))%self._buckets
+                    j +=1
+                    if self.array[new_index] is None or self.array[new_index] == self._del_marker:
+                        index = new_index
+                        break
+                self.array[index] = temp_array[i]
+            
 
 
     def __len__(self):

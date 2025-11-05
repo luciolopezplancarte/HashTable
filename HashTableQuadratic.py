@@ -2,8 +2,9 @@
 Lucio Plancarte 
 """
 
-
+import math
 class HashTable:
+    C = 0.65 # HASH FUNCTION CONSTANT
 
     def __init__(self, buckets = 10,
                         load_factor = 0.75,
@@ -25,6 +26,15 @@ class HashTable:
         The constant 'C' for the hash function with a value 0.65
         It prints the message "Initialzing HashTable with ______ buckets"
         """
+        self._buckets = buckets
+        self.array = [None] * buckets
+        self._size = 0
+        self._load_factor_threshold = load_factor
+        self._resize_multiplier = resize_by
+        self._del_marker = del_token
+
+        print(f"Initialzing Hashtable with {self._buckets} buckets")
+
 
     def hash_function(self, key):
         """
@@ -36,6 +46,8 @@ class HashTable:
         It uses the equation:
         h(k) = floor(buckets * (key * C mod 1 ) )
         """
+        index = math.floor(self._buckets * ((key * self.C) % 1))
+        return index
 
     def put(self, key, value):
         """
@@ -63,6 +75,36 @@ class HashTable:
             QUADRATIC probing, it can be reused for insertion.
         4. The size of the hash table is incremented only for new insertions, not for updates.
         """
+        #load factor = number of items in list/ number of available slots
+        #simpler implementation: (h(key) + i^2)%(tablesize)
+
+        load_factor = self._size /(self._buckets)
+        if load_factor > self._load_factor_threshold:
+            #resize
+            self._resize() 
+            print("Resizing...")
+        index = self.hash_function(key)
+        i = 0
+        if self.array[index] is not None:
+            print("COLLISION")
+            print("PROBING")
+            new_index = index
+            while True:
+            #while self.array[new_index] is not None:
+                new_index = (index + (i*i))%self._buckets
+                print(f"Probing Index{new_index}")
+                i +=1
+                if self.array[new_index] is None:
+                    index = new_index
+                    break
+            
+        self.array[index] = (key,value)
+        print(f"Inserting into index:{index}")
+        self._size +=1
+        
+
+
+
 
 
     def get(self, key):
@@ -75,6 +117,11 @@ class HashTable:
         probing technique. It is not a simple loop through the table!
         Also consider a circular table for the probing.
         """
+        #Check if the item exists
+        if self.search(key):
+            return "It Exists"
+        return None
+
 
     def search(self, key):
         """
@@ -116,17 +163,31 @@ class HashTable:
         to their new corresponding buckets in the new larger table based on the new
         hash computation.
         """
+        
+        self._buckets= self._resize_multiplier * self._buckets
+        new_array = [None] * self._buckets
+        
+        for i in range(len(self.array)):
+            if self.array[i] is not None:
+                new_index = self.hash_function(self.array[i][0])
+                print(f"newIndex: {new_index}")
+                new_array[new_index] = self.array[i]
+        self.array = new_array
+
 
     def __len__(self):
         """
         Method to return the VALID number of elements of the hash table
         """
+        return self._size
 
     def is_empty(self):
         """
         Method to check if the hash table is empty or not.
         It returns a boolean value
         """
+        return self._size == 0
+
     def __str__(self):
         """
         Method to show the content of the hash table including the None and DELETED values.
@@ -134,5 +195,10 @@ class HashTable:
         It returns a string to be used by the "print" function.
         If the table is empty, it returs "Hash Table is Empty"
         """
+        result = ""
+        for i in range(self._buckets):
+            result += f"{i}: {self.array[i]} \n"
+
+        return result
 
 

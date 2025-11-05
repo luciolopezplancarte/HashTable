@@ -78,12 +78,26 @@ class HashTable:
         #load factor = number of items in list/ number of available slots
         #simpler implementation: (h(key) + i^2)%(tablesize)
 
+        #UPDATE
+        #update = False
+        #if self.get(key):
+        #    update = True
+
         load_factor = self._size /(self._buckets)
         if load_factor > self._load_factor_threshold:
             #resize
             self._resize() 
             print("Resizing...")
         index = self.hash_function(key)
+        if self.get(key):
+            #UPDATE
+            temp= list(self.array[index])
+            temp[0] = key
+            temp[1] = value
+            self.array[index] = tuple(temp)
+
+            return
+
         i = 0
         if self.array[index] is not None:
             print("COLLISION")
@@ -94,7 +108,7 @@ class HashTable:
                 new_index = (index + (i*i))%self._buckets
                 print(f"Probing Index{new_index}")
                 i +=1
-                if self.array[new_index] is None:
+                if self.array[new_index] is None or self.array[new_index] == self._del_marker:
                     index = new_index
                     break
             
@@ -118,9 +132,11 @@ class HashTable:
         Also consider a circular table for the probing.
         """
         #Check if the item exists
-        if self.search(key):
-            return "It Exists"
-        return None
+        if not self.search(key):
+            return None
+        
+        index_toGet = self.hash_function(key)
+        return self.array[index_toGet][1]
 
 
     def search(self, key):
@@ -134,6 +150,30 @@ class HashTable:
         probing technique. It is not a simple loops through the table!
         Also consider a circular table for the probing.
         """
+        index_toSearch = self.hash_function(key)
+        index_toProbe  = index_toSearch
+        for i in range(self._buckets):
+            if self.array[index_toProbe]:
+                if self.array[index_toProbe][0] == key:
+                    return True
+                else:
+                    index_toProbe = (index_toSearch + (i * i))% self._buckets
+        return None
+                    
+
+        """if self.array[index_toSearch]:
+            if self.array[index_toSearch][0] == key:
+                return True
+            else:
+                #PROBE to make sure
+                for i in range(self._buckets):
+                    index_toSearch = (index_toSearch + (i * i))%self._buckets
+                    if self.array[index_toSearch][0] == key:
+                        return True
+                return None
+
+        """
+        
 
     def remove(self, key):
         """
@@ -156,6 +196,15 @@ class HashTable:
 
         In this activity, for simplicity we are NOT shrinking the table.
         """
+        if not self.get(key):
+            print(f"{key} does not exist at index: {self.hash_function(key)}")
+            return
+
+        index_toRemove = self.hash_function(key)
+        self.array[index_toRemove] = self._del_marker
+        self._size -= 1
+
+        
 
     def _resize(self):
         """
@@ -197,7 +246,10 @@ class HashTable:
         """
         result = ""
         for i in range(self._buckets):
-            result += f"{i}: {self.array[i]} \n"
+            if self.array[i] == self._del_marker:
+                result += f"{i}: DELETED\n"
+            else:
+                result += f"{i}: {self.array[i]} \n"
 
         return result
 
